@@ -4,8 +4,7 @@ declare(strict_types=1);
 namespace ipad54\BedrockEditionClient\utils;
 
 final class KeyPair{
-
-	public function __construct(private \OpenSSLAsymmetricKey $localPriv, private string $localPub, private ?\OpenSSLAsymmetricKey $remotePub = null){}
+	public function __construct(private \OpenSSLAsymmetricKey $localPriv, private string $localPub, private ?\OpenSSLAsymmetricKey $remotePub = null){ }
 
 	public function getLocalPriv() : \OpenSSLAsymmetricKey{
 		return $this->localPriv;

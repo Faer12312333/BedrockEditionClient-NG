@@ -9,7 +9,6 @@ use pocketmine\network\mcpe\protocol\StartGamePacket;
 use Ramsey\Uuid\UuidInterface;
 
 class Player{
-
 	private NetworkSession $networkSession;
 	private LoginInfo $loginInfo;
 	private UuidInterface $uuid;

@@ -10,10 +10,10 @@ use pocketmine\network\mcpe\protocol\Packet;
 use pocketmine\network\mcpe\protocol\PlayStatusPacket;
 use pocketmine\network\mcpe\protocol\TextPacket;
 
-require_once "vendor/autoload.php";
+require_once __DIR__ . "/vendor/autoload.php";
 
 $client = new Client(ServerAddress::create("127.0.0.1", 19132), new LoginInfo("Shoghicp"));
-$client->handleDataPacket(function(Packet $packet) use($client) : void{
+$client->handleDataPacket(static function(Packet $packet) use($client) : void{
 	if($packet instanceof PlayStatusPacket && $packet->status === PlayStatusPacket::PLAYER_SPAWN){
 		$pk = new TextPacket();
 		$pk->message = "A Shoghi has fallen into the river in Lego Mojang";
@@ -47,7 +47,7 @@ use pocketmine\network\mcpe\protocol\Packet;
 use pocketmine\network\mcpe\protocol\PlayStatusPacket;
 use pocketmine\network\mcpe\protocol\TextPacket;
 
-require_once "vendor/autoload.php";
+require_once __DIR__ . "/vendor/autoload.php";
 
 /** @var Client[] $clients */
 $clients = [];
@@ -55,7 +55,7 @@ $clients = [];
 for($i = 0; $i <= 50; $i++){
 	$client = new Client(ServerAddress::create("127.0.0.1", 19132), new LoginInfo("PMMP" . mt_rand(1, 10000)));
 
-	$client->handleDataPacket(function(Packet $packet) use ($client) : void{
+	$client->handleDataPacket(static function(Packet $packet) use ($client) : void{
 		if($packet instanceof DisconnectPacket){
 			$client->getLogger()->warning($client->getLoginInfo()->getUsername() . ": disconnected from server, reason " . $packet->message);
 		}elseif($packet instanceof PlayStatusPacket && $packet->status === PlayStatusPacket::PLAYER_SPAWN){

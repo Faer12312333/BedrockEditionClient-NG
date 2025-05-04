@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace ipad54\BedrockEditionClient\network\raknet;
 
 use ipad54\BedrockEditionClient\network\NetworkSession;
-use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\RequestNetworkSettingsPacket;
 use raklib\client\ClientSocket;
 use raklib\generic\ReceiveReliabilityLayer;
@@ -31,15 +30,17 @@ use raklib\protocol\OpenConnectionRequest2;
 use raklib\protocol\Packet;
 use raklib\protocol\PacketReliability;
 use raklib\protocol\PacketSerializer;
+use raklib\protocol\UnconnectedPing;
+use raklib\protocol\UnconnectedPong;
 use raklib\utils\InternetAddress;
+use function explode;
 use function max;
 use function microtime;
 use function ord;
 use function substr;
 use function time;
 
-class RakNetConnection{ //
-
+class RakNetConnection{
 	public const MAX_SPLIT_PART_COUNT = 192;
 	public const MAX_CONCURRENT_SPLIT_COUNT = 4;
 
@@ -109,12 +110,12 @@ class RakNetConnection{ //
 			}
 		);
 
-		$pk = new OpenConnectionRequest1();
-		$pk->protocol = self::MCPE_RAKNET_PROTOCOL_VERSION;
-		$pk->mtuSize = $this->mtuSize - 28;
+		$pk = new UnconnectedPing();
+		$pk->sendPingTime = time();
+		$pk->clientId = $networkSession->getClient()->getId();
 		$this->sendPacket($pk);
 
-		$this->logger->debug("Sending OpenConnectionRequest1");
+		$this->logger->debug("Sending UnconnectedPing");
 	}
 
 	public function getRakNetTimeMS() : int{
@@ -173,7 +174,16 @@ class RakNetConnection{ //
 	}
 
 	public function handleOfflineMessage(OfflineMessage $packet) : void{
-		if($packet instanceof OpenConnectionReply1){
+		if($packet instanceof UnconnectedPong){
+			$this->networkSession->setProtocol((int) explode(";", $packet->serverName, 3)[2]);
+
+			$pk = new OpenConnectionRequest1();
+			$pk->protocol = self::MCPE_RAKNET_PROTOCOL_VERSION;
+			$pk->mtuSize = $this->mtuSize - 28;
+			$this->sendPacket($pk);
+
+			$this->logger->debug("Sending OpenConnectionRequest1");
+		}elseif($packet instanceof OpenConnectionReply1){
 			$pk = new OpenConnectionRequest2();
 			$pk->clientID = $this->networkSession->getClient()->getId();
 			$pk->serverAddress = $this->serverAddress;
@@ -191,7 +201,7 @@ class RakNetConnection{ //
 
 			$this->logger->debug("Sending ConnectionRequest");
 		}elseif($packet instanceof IncompatibleProtocolVersion){
-			$this->logger->debug("Incompatible protocol, need $packet->protocolVersion");
+			$this->logger->debug("Incompatible protocol($packet->protocolVersion)");
 		}
 	}
 
@@ -242,7 +252,7 @@ class RakNetConnection{ //
 					$pk->sendPingTime = $pk->sendPongTime = 0;
 					$this->queueConnectedPacket($pk, PacketReliability::UNRELIABLE, 0);
 
-					$this->networkSession->sendDataPacket(RequestNetworkSettingsPacket::create(ProtocolInfo::CURRENT_PROTOCOL));
+					$this->networkSession->sendDataPacket(RequestNetworkSettingsPacket::create($this->networkSession->getProtocol()));
 
 					$this->sendPing();
 
@@ -263,7 +273,7 @@ class RakNetConnection{ //
 				$this->networkSession->handleEncoded($buffer);
 			}
 		}else{
-			//$this->logger->notice("Received packet before connection: " . bin2hex($packet->buffer));
+			$this->logger->notice("Received packet before connection: " . bin2hex($packet->buffer));
 		}
 	}
 }

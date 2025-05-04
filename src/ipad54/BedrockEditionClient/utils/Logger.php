@@ -3,13 +3,13 @@ declare(strict_types=1);
 
 namespace ipad54\BedrockEditionClient\utils;
 
-use LogLevel;
 use pocketmine\utils\Terminal;
 use pocketmine\utils\TextFormat;
 use pocketmine\utils\Utils;
+use function implode;
+use function sprintf;
 
 class Logger implements \Logger{
-
 	protected bool $logDebug;
 
 	private string $format = TextFormat::AQUA . "[%s] " . TextFormat::RESET . "%s[%s]: %s" . TextFormat::RESET;
@@ -17,7 +17,6 @@ class Logger implements \Logger{
 	private bool $useFormattingCodes;
 
 	private string $timezone;
-
 
 	public function __construct(bool $useFormattingCodes, \DateTimeZone $timezone, bool $logDebug = false){
 		$this->logDebug = $logDebug;
@@ -100,28 +99,28 @@ class Logger implements \Logger{
 
 	public function log($level, $message) : void{
 		switch($level){
-			case LogLevel::EMERGENCY:
+			case \LogLevel::EMERGENCY:
 				$this->emergency($message);
 				break;
-			case LogLevel::ALERT:
+			case \LogLevel::ALERT:
 				$this->alert($message);
 				break;
-			case LogLevel::CRITICAL:
+			case \LogLevel::CRITICAL:
 				$this->critical($message);
 				break;
-			case LogLevel::ERROR:
+			case \LogLevel::ERROR:
 				$this->error($message);
 				break;
-			case LogLevel::WARNING:
+			case \LogLevel::WARNING:
 				$this->warning($message);
 				break;
-			case LogLevel::NOTICE:
+			case \LogLevel::NOTICE:
 				$this->notice($message);
 				break;
-			case LogLevel::INFO:
+			case \LogLevel::INFO:
 				$this->info($message);
 				break;
-			case LogLevel::DEBUG:
+			case \LogLevel::DEBUG:
 				$this->debug($message);
 				break;
 		}
@@ -134,7 +133,7 @@ class Logger implements \Logger{
 	 * @param string $color
 	 */
 	protected function send(string $message, string $level, string $prefix, string $color) : void{
-		$time = new \DateTime('now', new \DateTimeZone($this->timezone));
+		$time = new \DateTime("now", new \DateTimeZone($this->timezone));
 
 		$message = sprintf($this->format, $time->format("H:i:s.v"), $color, $prefix, TextFormat::clean($message, false));
 
@@ -142,6 +141,5 @@ class Logger implements \Logger{
 			Terminal::init($this->useFormattingCodes); //lazy-init colour codes because we don't know if they've been registered on this thread
 		}
 		Terminal::writeLine($message);
-
 	}
 }

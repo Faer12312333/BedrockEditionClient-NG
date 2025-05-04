@@ -7,9 +7,11 @@ use pocketmine\entity\Skin;
 use pocketmine\network\mcpe\protocol\types\DeviceOS;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
+use function bin2hex;
+use function random_bytes;
+use function str_repeat;
 
 class LoginInfo{
-
 	private string $username;
 	private string $locale;
 

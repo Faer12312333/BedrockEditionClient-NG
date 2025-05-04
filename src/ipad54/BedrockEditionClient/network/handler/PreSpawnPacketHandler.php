@@ -16,10 +16,10 @@ use pocketmine\network\mcpe\protocol\ServerToClientHandshakePacket;
 use pocketmine\network\mcpe\protocol\SetLocalPlayerAsInitializedPacket;
 use pocketmine\network\mcpe\protocol\StartGamePacket;
 use pocketmine\network\mcpe\protocol\types\CompressionAlgorithm;
+use const PHP_INT_MAX;
 
 final class PreSpawnPacketHandler extends PacketHandler{
-
-	public function __construct(private NetworkSession $networkSession){}
+	public function __construct(private NetworkSession $networkSession){ }
 
 	public function handleServerToClientHandshake(ServerToClientHandshakePacket $packet) : bool{
 		$this->networkSession->startEncryption($packet->jwt);
@@ -43,7 +43,7 @@ final class PreSpawnPacketHandler extends PacketHandler{
 	public function handlePlayStatus(PlayStatusPacket $packet) : bool{
 		if($packet->status === PlayStatusPacket::PLAYER_SPAWN){
 			$this->networkSession->sendDataPacket(SetLocalPlayerAsInitializedPacket::create($this->networkSession->getClient()->getId()));
-			$this->networkSession->getPlayer()->setSpawned(true);
+			$this->networkSession->getPlayer()?->setSpawned(true);
 
 			$this->networkSession->setHandler(null);
 

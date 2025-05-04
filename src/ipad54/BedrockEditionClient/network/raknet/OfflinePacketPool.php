@@ -8,8 +8,8 @@ use raklib\protocol\IncompatibleProtocolVersion;
 use raklib\protocol\OfflineMessage;
 use raklib\protocol\OpenConnectionReply1;
 use raklib\protocol\OpenConnectionReply2;
-use raklib\protocol\UnconnectedPing;
-use raklib\protocol\UnconnectedPingOpenConnections;
+use raklib\protocol\UnconnectedPong;
+use function ord;
 
 final class OfflinePacketPool{
 	use SingletonTrait;
@@ -19,8 +19,7 @@ final class OfflinePacketPool{
 	public function __construct(){
 		$this->packetPool = new \SplFixedArray(256);
 
-		$this->registerPacket(UnconnectedPing::$ID, UnconnectedPing::class);
-		$this->registerPacket(UnconnectedPingOpenConnections::$ID, UnconnectedPingOpenConnections::class);
+		$this->registerPacket(UnconnectedPong::$ID, UnconnectedPong::class);
 		$this->registerPacket(OpenConnectionReply1::$ID, OpenConnectionReply1::class);
 		$this->registerPacket(OpenConnectionReply2::$ID, OpenConnectionReply2::class);
 		$this->registerPacket(IncompatibleProtocolVersion::$ID, IncompatibleProtocolVersion::class);

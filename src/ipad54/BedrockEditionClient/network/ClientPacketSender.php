@@ -9,11 +9,9 @@ use raklib\protocol\EncapsulatedPacket;
 use raklib\protocol\PacketReliability;
 
 class ClientPacketSender implements PacketSender{
+	public function __construct(private RakNetConnection $connection){ }
 
-	public function __construct(private RakNetConnection $connection){}
-
-
-	public function send(string $payload, bool $immediate) : void{
+	public function send(string $payload, bool $immediate, ?int $receiptId) : void{
 		$pk = new EncapsulatedPacket();
 		$pk->buffer = RakNetConnection::MCPE_RAKNET_PACKET_ID . $payload;
 		$pk->reliability = PacketReliability::RELIABLE_ORDERED;

@@ -3,16 +3,16 @@ declare(strict_types=1);
 
 namespace ipad54\BedrockEditionClient;
 
-use ipad54\BedrockEditionClient\player\LoginInfo;
 use ipad54\BedrockEditionClient\network\NetworkSession;
+use ipad54\BedrockEditionClient\player\LoginInfo;
 use ipad54\BedrockEditionClient\utils\Logger;
 use pocketmine\network\mcpe\protocol\Packet;
 use pocketmine\utils\Timezone;
 use pocketmine\utils\Utils;
 use raklib\utils\InternetAddress;
+use function mt_rand;
 
 class Client{
-
 	private ?NetworkSession $networkSession = null;
 
 	private \Logger $logger;
@@ -25,7 +25,7 @@ class Client{
 		Timezone::init();
 
 		$this->logger = new Logger(true, new \DateTimeZone(Timezone::get()), $logDebug);
-		$this->id = $clientId ?? rand();
+		$this->id = $clientId ?? mt_rand();
 	}
 
 	public function getServerAddress() : InternetAddress{

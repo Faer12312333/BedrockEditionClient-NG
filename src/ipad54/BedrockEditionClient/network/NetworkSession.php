@@ -9,25 +9,42 @@ use ipad54\BedrockEditionClient\network\raknet\RakNetConnection;
 use ipad54\BedrockEditionClient\player\LoginInfo;
 use ipad54\BedrockEditionClient\player\Player;
 use ipad54\BedrockEditionClient\utils\KeyPair;
-use ipad54\BedrockEditionClient\utils\Utils;
 use pocketmine\network\mcpe\compression\Compressor;
+use pocketmine\network\mcpe\compression\DecompressionException;
+use pocketmine\network\mcpe\encryption\DecryptionException;
 use pocketmine\network\mcpe\encryption\EncryptionContext;
 use pocketmine\network\mcpe\encryption\EncryptionUtils;
 use pocketmine\network\mcpe\handler\PacketHandler;
 use pocketmine\network\mcpe\JwtUtils;
+use pocketmine\network\mcpe\protocol\CameraAimAssistPresetsPacket;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
 use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\Packet;
+use pocketmine\network\mcpe\protocol\PacketDecodeException;
 use pocketmine\network\mcpe\protocol\PacketPool;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\PacketBatch;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
-use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
 use pocketmine\network\mcpe\protocol\ServerboundPacket;
 use pocketmine\network\mcpe\protocol\StartGamePacket;
+use pocketmine\network\mcpe\protocol\types\CompressionAlgorithm;
 use pocketmine\network\mcpe\protocol\types\login\JwtChain;
 use pocketmine\network\PacketHandlingException;
+use pocketmine\utils\BinaryDataException;
+use pocketmine\utils\BinaryStream;
 use raklib\utils\InternetAddress;
+use function base64_decode;
+use function base64_encode;
+use function bin2hex;
+use function chr;
+use function get_class;
+use function json_encode;
+use function openssl_pkey_new;
+use function ord;
+use function random_bytes;
+use function strlen;
+use function substr;
+use function time;
 
 class NetworkSession{
 	private const MTU = 1492;
@@ -44,7 +61,6 @@ class NetworkSession{
 
 	private \Logger $logger;
 
-	private PacketSerializerContext $serializerContext;
 	private PacketPool $packetPool;
 	private ?PacketHandler $handler = null;
 
@@ -56,6 +72,8 @@ class NetworkSession{
 
 	private bool $loggedIn = false;
 
+	private int $protocol;
+
 	public function __construct(InternetAddress $serverAddress, LoginInfo $loginInfo, Client $client){
 		$this->serverAddress = $serverAddress;
 		$this->loginInfo = $loginInfo;
@@ -64,7 +82,6 @@ class NetworkSession{
 		$this->logger = $client->getLogger();
 
 		$this->packetPool = PacketPool::getInstance();
-		$this->serializerContext = new PacketSerializerContext(Utils::makeItemTypeDictionary());
 	}
 
 	public function getServerAddress() : InternetAddress{
@@ -99,6 +116,14 @@ class NetworkSession{
 		return $this->loggedIn;
 	}
 
+	public function getProtocol() : int{
+		return $this->protocol;
+	}
+
+	public function setProtocol(int $protocol) : void{
+		$this->protocol = $protocol;
+	}
+
 	public function update() : void{
 		$this->connection->update();
 	}
@@ -118,7 +143,7 @@ class NetworkSession{
 
 		if($this->handler !== null){
 			$this->handler->setUp();
-			$this->logger->debug("A new packet handler has been set (".get_class($handler).")");
+			$this->logger->debug("A new packet handler has been set (" . ($handler !== null ? get_class($handler) : "null") . ")");
 		}
 	}
 
@@ -128,7 +153,7 @@ class NetworkSession{
 		}
 		$this->player = new Player($this, $this->loginInfo, $packet, $this->client->getId());
 
-		$this->logger->debug("Player was created, eid: ".$this->client->getId());
+		$this->logger->debug("Player was created, eid: " . $this->client->getId());
 	}
 
 	public function startEncryption(string $handshakeJwt) : void{
@@ -147,19 +172,63 @@ class NetworkSession{
 
 		$this->cipher = EncryptionContext::fakeGCM($encryptionKey);
 
-		$this->logger->debug("Encryption was started, key: ".bin2hex($encryptionKey));
+		$this->logger->debug("Encryption was started, key: " . bin2hex($encryptionKey));
 	}
 
 	public function handleEncoded(string $payload) : void{
 		if($this->cipher !== null){
-			$payload = $this->cipher->decrypt($payload);
+			try{
+				$payload = $this->cipher->decrypt($payload);
+			}catch(DecryptionException $e){
+				$this->logger->debug("Encrypted packet: " . base64_encode($payload));
+				throw PacketHandlingException::wrap($e, "Packet decryption error");
+			}
 		}
 
-		$stream = new PacketBatch($this->compressor?->decompress($payload) ?? $payload);
-		foreach($stream->getPackets($this->packetPool, $this->serializerContext, 500) as [$packet, $buffer]){
-			if($packet !== null){
-				$this->handleDataPacket($packet, $buffer);
+		if($payload === ""){
+			throw new PacketHandlingException("No bytes in payload");
+		}
+
+		if($this->compressor !== null){
+			$compressionType = ord($payload[0]);
+			$compressed = substr($payload, 1);
+			if($compressionType === CompressionAlgorithm::NONE){
+				$decompressed = $compressed;
+			}elseif($compressionType === $this->compressor->getNetworkId()){
+				try{
+					$decompressed = $this->compressor->decompress($compressed);
+				}catch(DecompressionException $e){
+					$this->logger->debug("Failed to decompress packet: " . base64_encode($compressed));
+					throw PacketHandlingException::wrap($e, "Compressed packet batch decode error");
+				}
+			}else{
+				throw new PacketHandlingException("Packet compressed with unexpected compression type $compressionType");
 			}
+		}else{
+			$decompressed = $payload;
+		}
+
+		try{
+			$stream = new BinaryStream($decompressed);
+			foreach(PacketBatch::decodeRaw($stream) as $buffer){
+				$packet = $this->packetPool->getPacket($buffer);
+				if($packet === null){
+					$this->logger->debug("Unknown packet: " . base64_encode($buffer));
+					throw new PacketHandlingException("Unknown packet received");
+				}
+				try{
+					if($packet instanceof CameraAimAssistPresetsPacket){
+						continue;
+					}
+					$this->handleDataPacket($packet, $buffer);
+				}catch(PacketHandlingException $e){
+					$this->logger->debug($packet->getName() . ": " . base64_encode($buffer));
+					throw PacketHandlingException::wrap($e, "Error processing " . $packet->getName());
+				}
+			}
+		}catch(PacketDecodeException|BinaryDataException $e){
+			$this->logger->logException($e);
+			throw PacketHandlingException::wrap($e, "Packet batch decode error");
 		}
 	}
 
@@ -169,7 +238,7 @@ class NetworkSession{
 		}
 
 		try{
-			$packet->decode(PacketSerializer::decoder($buffer, 0, $this->serializerContext));
+			$packet->decode(PacketSerializer::decoder($this->protocol, $buffer, 0));
 		}catch(\Throwable $e){
 			$this->logger->logException($e);
 			return;
@@ -186,19 +255,28 @@ class NetworkSession{
 	}
 
 	public function sendDataPacket(ServerboundPacket $packet, bool $immediate = false) : void{
-		// if(!$this->loggedIn && !$packet->canBeSentBeforeLogin()){
-		// 	throw new \InvalidArgumentException("Attempted to send " . get_class($packet) . " too early");
-		// }
+		$encoder = PacketSerializer::encoder($this->protocol);
+		$packet->encode($encoder);
+		$buffer = $encoder->getBuffer();
 
-		$batch = PacketBatch::fromPackets($this->serializerContext, $packet);
-		$payload = $this->compressor?->compress($batch->getBuffer()) ?? $batch->getBuffer();
+		$stream = new BinaryStream();
+		PacketBatch::encodeRaw($stream, [$buffer]);
+		$buffer = $stream->getBuffer();
 
-		if($this->cipher !== null){
-			$payload = $this->cipher->encrypt($payload);
+		if($this->compressor !== null){
+			if($this->protocol >= ProtocolInfo::PROTOCOL_1_20_60 && (($threshold = $this->compressor->getCompressionThreshold()) === null || strlen($buffer) < $threshold)){
+				$compressionType = CompressionAlgorithm::NONE;
+				$compressed = $buffer;
+			}else{
+				$compressionType = $this->compressor->getNetworkId();
+				$compressed = $this->compressor->compress($buffer);
+			}
+
+			$buffer = ($this->protocol >= ProtocolInfo::PROTOCOL_1_20_60 ? chr($compressionType) : "") . $compressed;
 		}
+		$buffer = $this->cipher?->encrypt($buffer) ?? $buffer;
 
-		$this->sender->send($payload, $immediate);
-
+		$this->sender->send($buffer, $immediate, null);
 	}
 
 	public function processLogin() : void{
@@ -208,11 +286,11 @@ class NetworkSession{
 
 		[$chainDataJwt, $clientDataJwt] = $this->buildLoginData();
 
-		$this->sendDataPacket(LoginPacket::create(ProtocolInfo::CURRENT_PROTOCOL, $chainDataJwt, $clientDataJwt));
+		$this->sendDataPacket(LoginPacket::create($this->protocol, $chainDataJwt, $clientDataJwt));
 
 		$this->loggedIn = true;
 
-		$this->logger->debug("LoginPacket was sent, nickname: ".$this->loginInfo->getUsername());
+		$this->logger->debug("LoginPacket was sent, nickname: " . $this->loginInfo->getUsername());
 	}
 
 	protected function buildLoginData() : array{
