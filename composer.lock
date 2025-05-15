@@ -131,12 +131,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/NetherGamesMC/BedrockData.git",
-                "reference": "b15ea8b14f5620937b26abde2e9c33a4ad44fa39"
+                "reference": "a6014c408951241b1b3db54495f725da9da127b3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockData/zipball/b15ea8b14f5620937b26abde2e9c33a4ad44fa39",
-                "reference": "b15ea8b14f5620937b26abde2e9c33a4ad44fa39",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockData/zipball/a6014c408951241b1b3db54495f725da9da127b3",
+                "reference": "a6014c408951241b1b3db54495f725da9da127b3",
                 "shasum": ""
             },
             "default-branch": true,
@@ -149,7 +149,7 @@
             "support": {
                 "source": "https://github.com/NetherGamesMC/BedrockData/tree/master"
             },
-            "time": "2025-03-25T20:49:17+00:00"
+            "time": "2025-05-12T12:16:52+00:00"
         },
         {
             "name": "nethergamesmc/bedrock-protocol",
@@ -157,12 +157,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/NetherGamesMC/BedrockProtocol.git",
-                "reference": "72a92916fd0243a8cb579e4e3b90413f71f5aac0"
+                "reference": "fe408f031d1c86cb233c3e7b55f49dbe671ef8c9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/72a92916fd0243a8cb579e4e3b90413f71f5aac0",
-                "reference": "72a92916fd0243a8cb579e4e3b90413f71f5aac0",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/fe408f031d1c86cb233c3e7b55f49dbe671ef8c9",
+                "reference": "fe408f031d1c86cb233c3e7b55f49dbe671ef8c9",
                 "shasum": ""
             },
             "require": {
@@ -195,7 +195,7 @@
             "support": {
                 "source": "https://github.com/NetherGamesMC/BedrockProtocol/tree/master"
             },
-            "time": "2025-03-24T17:27:03+00:00"
+            "time": "2025-05-12T12:01:21+00:00"
         },
         {
             "name": "nethergamesmc/pocketmine-mp",
@@ -203,12 +203,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/NetherGamesMC/PocketMine-MP.git",
-                "reference": "679c9837a5eae97e50e6797ee10e5874e7f29e92"
+                "reference": "fa3804bfa8db827a4fd7cf746e921b98c0d0800b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/PocketMine-MP/zipball/679c9837a5eae97e50e6797ee10e5874e7f29e92",
-                "reference": "679c9837a5eae97e50e6797ee10e5874e7f29e92",
+                "url": "https://api.github.com/repos/NetherGamesMC/PocketMine-MP/zipball/fa3804bfa8db827a4fd7cf746e921b98c0d0800b",
+                "reference": "fa3804bfa8db827a4fd7cf746e921b98c0d0800b",
                 "shasum": ""
             },
             "require": {
@@ -317,7 +317,7 @@
                     "url": "https://github.com/pmmp/PocketMine-MP#donate"
                 }
             ],
-            "time": "2025-04-21T13:37:13+00:00"
+            "time": "2025-05-12T12:40:33+00:00"
         },
         {
             "name": "netresearch/jsonmapper",
@@ -1178,19 +1178,20 @@
         },
         {
             "name": "symfony/polyfill-mbstring",
-            "version": "v1.31.0",
+            "version": "1.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-mbstring.git",
-                "reference": "85181ba99b2345b0ef10ce42ecac37612d9fd341"
+                "reference": "6d857f4d76bd4b343eac26d6b539585d2bc56493"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/85181ba99b2345b0ef10ce42ecac37612d9fd341",
-                "reference": "85181ba99b2345b0ef10ce42ecac37612d9fd341",
+                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/6d857f4d76bd4b343eac26d6b539585d2bc56493",
+                "reference": "6d857f4d76bd4b343eac26d6b539585d2bc56493",
                 "shasum": ""
             },
             "require": {
+                "ext-iconv": "*",
                 "php": ">=7.2"
             },
             "provide": {
@@ -1199,6 +1200,7 @@
             "suggest": {
                 "ext-mbstring": "For best performance"
             },
+            "default-branch": true,
             "type": "library",
             "extra": {
                 "thanks": {
@@ -1238,7 +1240,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.31.0"
+                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.32.0"
             },
             "funding": [
                 {
@@ -1254,7 +1256,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-09-09T11:45:10+00:00"
+            "time": "2024-12-23T08:48:59+00:00"
         }
     ],
     "packages-dev": [
@@ -2050,12 +2052,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "43d2cb18d0675c38bd44982a5d1d88f6d53d8d95"
+                "reference": "e3874aa4afb83cb6afa3689f22a300a9d7882e0f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/43d2cb18d0675c38bd44982a5d1d88f6d53d8d95",
-                "reference": "43d2cb18d0675c38bd44982a5d1d88f6d53d8d95",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/e3874aa4afb83cb6afa3689f22a300a9d7882e0f",
+                "reference": "e3874aa4afb83cb6afa3689f22a300a9d7882e0f",
                 "shasum": ""
             },
             "require": {
@@ -2129,7 +2131,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.6.23"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.6"
             },
             "funding": [
                 {
@@ -2153,7 +2155,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-05-02T06:40:34+00:00"
+            "time": "2025-05-14T13:32:26+00:00"
         },
         {
             "name": "sebastian/cli-parser",

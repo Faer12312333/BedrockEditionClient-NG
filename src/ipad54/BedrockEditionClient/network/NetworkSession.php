@@ -217,6 +217,7 @@ class NetworkSession{
 					throw new PacketHandlingException("Unknown packet received");
 				}
 				try{
+					//TODO: Hack!!! "CameraAimAssistPresetsPacket: Not enough bytes left in buffer"
 					if($packet instanceof CameraAimAssistPresetsPacket){
 						continue;
 					}
