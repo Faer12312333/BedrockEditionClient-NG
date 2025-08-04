@@ -190,19 +190,28 @@ class NetworkSession{
 		}
 
 		if($this->compressor !== null){
-			$compressionType = ord($payload[0]);
-			$compressed = substr($payload, 1);
-			if($compressionType === CompressionAlgorithm::NONE){
-				$decompressed = $compressed;
-			}elseif($compressionType === $this->compressor->getNetworkId()){
+			if($this->protocol >= ProtocolInfo::PROTOCOL_1_20_60){
+				$compressionType = ord($payload[0]);
+				$compressed = substr($payload, 1);
+				if($compressionType === CompressionAlgorithm::NONE){
+					$decompressed = $compressed;
+				}elseif($compressionType === $this->compressor->getNetworkId()){
+					try{
+						$decompressed = $this->compressor->decompress($compressed);
+					}catch(DecompressionException $e){
+						$this->logger->debug("Failed to decompress packet: " . base64_encode($compressed));
+						throw PacketHandlingException::wrap($e, "Compressed packet batch decode error");
+					}
+				}else{
+					throw new PacketHandlingException("Packet compressed with unexpected compression type $compressionType");
+				}
+			} else {
 				try{
-					$decompressed = $this->compressor->decompress($compressed);
+					$decompressed = $this->compressor->decompress($payload);
 				}catch(DecompressionException $e){
-					$this->logger->debug("Failed to decompress packet: " . base64_encode($compressed));
+					$this->logger->debug("Failed to decompress packet: " . base64_encode($payload));
 					throw PacketHandlingException::wrap($e, "Compressed packet batch decode error");
 				}
-			}else{
-				throw new PacketHandlingException("Packet compressed with unexpected compression type $compressionType");
 			}
 		}else{
 			$decompressed = $payload;
