@@ -1,7 +1,7 @@
 # BedrockEditionClient
 Implementation of Minecraft: Bedrock Edition Client based on fork [PocketMine-MP](https://github.com/NetherGamesMC/PocketMine-MP) with Encryption
 
-Current Minecraft support versions: 1.20.0-1.21.84(589-800 protocols)
+Current Minecraft support versions: 1.20.0+
 
 ### Getting started
 Running Bedrock Edition Client requires PMMP's php8 binary

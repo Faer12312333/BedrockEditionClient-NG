@@ -16,6 +16,7 @@ use pocketmine\network\mcpe\encryption\EncryptionContext;
 use pocketmine\network\mcpe\encryption\EncryptionUtils;
 use pocketmine\network\mcpe\handler\PacketHandler;
 use pocketmine\network\mcpe\JwtUtils;
+use pocketmine\network\mcpe\protocol\BiomeDefinitionListPacket;
 use pocketmine\network\mcpe\protocol\CameraAimAssistPresetsPacket;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
 use pocketmine\network\mcpe\protocol\LoginPacket;
@@ -226,10 +227,6 @@ class NetworkSession{
 					throw new PacketHandlingException("Unknown packet received");
 				}
 				try{
-					//TODO: Hack!!! "CameraAimAssistPresetsPacket: Not enough bytes left in buffer"
-					if($packet instanceof CameraAimAssistPresetsPacket){
-						continue;
-					}
 					$this->handleDataPacket($packet, $buffer);
 				}catch(PacketHandlingException $e){
 					$this->logger->debug($packet->getName() . ": " . base64_encode($buffer));
@@ -294,9 +291,9 @@ class NetworkSession{
 			throw new \LogicException("Client already loggedIn!");
 		}
 
-		[$chainDataJwt, $clientDataJwt] = $this->buildLoginData();
+		[$authInfoJson, $clientDataJwt] = $this->buildLoginData();
 
-		$this->sendDataPacket(LoginPacket::create($this->protocol, $chainDataJwt, $clientDataJwt));
+		$this->sendDataPacket(LoginPacket::create($this->protocol, json_encode($authInfoJson), $clientDataJwt));
 
 		$this->loggedIn = true;
 
@@ -316,8 +313,7 @@ class NetworkSession{
 			"x5u" => $localPub
 		];
 
-		$chainDataJwt = new JwtChain();
-		$chainDataJwt->chain = [JwtUtils::create($header, [
+		$authInfoJson = ["chain" => [JwtUtils::create($header, [
 			"exp" => time() + 3600,
 			"extraData" => [
 				"XUID" => "", //TODO: Xbox auth
@@ -326,7 +322,7 @@ class NetworkSession{
 			],
 			"identityPublicKey" => $localPub,
 			"nbf" => time() - 3600
-		], $localPriv)];
+		], $localPriv)]];
 
 		$skin = $this->loginInfo->getSkin();
 
@@ -374,7 +370,15 @@ class NetworkSession{
 			"UIProfile" => 1 //TODO: Hardcoded value
 		], $localPriv);
 
-		return [$chainDataJwt, $clientDataJwt];
+		if($this->protocol >= ProtocolInfo::PROTOCOL_1_21_90) {
+			$authInfoJson = [
+				"AuthenticationType" => 0,
+				"Certificate" => json_encode($authInfoJson),
+				"Token" => ""
+			];
+		}
+
+		return [$authInfoJson, $clientDataJwt];
 	}
 
 	public function setCompressor(?Compressor $compressor) : NetworkSession{
